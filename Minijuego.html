@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>JUEGO DE LOS BLOQUES - Progresivo</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #050505;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: #111;
+            border-radius: 15px;
+            border: 1px solid #333;
+        }
+
+        canvas {
+            background-color: #000;
+            border-radius: 5px;
+            display: block;
+        }
+
+        #ui-side {
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .leaderboard {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #00ffcc;
+            height: 470px;
+            box-sizing: border-box;
+        }
+
+        .leaderboard h3 { margin-top: 0; color: #00ffcc; text-align: center; font-size: 1.1em; text-transform: uppercase; }
+        
+        #score-list {
+            list-style: none;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        #score-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #222;
+            font-size: 0.9em;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 20px; left: 20px; 
+            width: 400px; height: 500px;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 5px;
+            z-index: 100;
+        }
+
+        input {
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #00ffcc;
+            background: #000;
+            color: white;
+            margin-bottom: 15px;
+            text-align: center;
+            width: 200px;
+        }
+
+        button {
+            padding: 12px 40px;
+            background: #00ffcc;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        button:hover { background: #00cca3; transform: scale(1.05); }
+
+        /* Botón Volver */
+        #back-btn {
+            position: absolute;
+            bottom: -50px;
+            left: 0;
+            color: #00ffcc;
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        #back-btn:hover { color: white; text-shadow: 0 0 10px #00ffcc; }
+
+        .hidden { display: none !important; }
+        b { color: #00ffcc; }
+        .level-up { color: #ffcc00; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+    
+    <a href="index.html" id="back-btn">← VOLVER AL MENÚ</a>
+
+    <div id="ui-side">
+        <div class="leaderboard">
+            <h3>Top Personal</h3>
+            <ul id="score-list"></ul>
+        </div>
+    </div>
+
+    <div id="overlay">
+        <div id="menu-content" style="text-align:center;">
+            <h2 id="menu-title" style="color:#00ffcc;">JUEGO DE LOS BLOQUES</h2>
+            <div id="input-area">
+                <input type="text" id="player-name" placeholder="Escribe tu nombre" maxlength="12">
+            </div>
+            <p id="final-stat" class="hidden"></p>
+            <button id="play-btn">EMPEZAR</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const nameInput = document.getElementById('player-name');
+    const playBtn = document.getElementById('play-btn');
+    const overlay = document.getElementById('overlay');
+    const scoreList = document.getElementById('score-list');
+    
+    let player = { x: 185, y: 440, w: 30, h: 30, color: '#00ffcc' };
+    let enemies = [];
+    let score = 0;
+    let gameActive = false;
+    let playerName = "";
+    let keys = {};
+    let animationId;
+    let spawnTimeout;
+
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
+
+    playBtn.onclick = () => {
+        if (!gameActive) {
+            if (!playerName) {
+                playerName = nameInput.value.trim() || "Anónimo";
+            }
+            startNewGame();
+        }
+    };
+
+    function startNewGame() {
+        score = 0;
+        enemies = [];
+        player.x = 185;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        document.getElementById('input-area').classList.add('hidden');
+        updateLeaderboard();
+        clearTimeout(spawnTimeout);
+        spawnEnemy();
+        draw(); 
+    }
+
+    function spawnEnemy() {
+        if (!gameActive) return;
+
+        let level = Math.floor(score / 5); 
+        let size = Math.random() * 25 + 20;
+        
+        enemies.push({
+            x: Math.random() * (canvas.width - size),
+            y: -size,
+            w: size,
+            h: size,
+            speed: 3 + (level * 0.8) 
+        });
+
+        let delay = Math.max(150, 800 - (level * 70));
+        spawnTimeout = setTimeout(spawnEnemy, delay);
+    }
+
+    function draw() {
+        if (!gameActive) return;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (keys['ArrowLeft'] && player.x > 0) player.x -= 7;
+        if (keys['ArrowRight'] && player.x < canvas.width - player.w) player.x += 7;
+
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = player.color;
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+
+        enemies.forEach((en, i) => {
+            en.y += en.speed;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff3366';
+            ctx.fillStyle = '#ff3366';
+            ctx.fillRect(en.x, en.y, en.w, en.h);
+
+            if (player.x < en.x + en.w && player.x + player.w > en.x &&
+                player.y < en.y + en.h && player.y + player.h > en.y) {
+                endGame();
+            }
+
+            if (en.y > canvas.height) {
+                enemies.splice(i, 1);
+                score++;
+            }
+        });
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "white";
+        ctx.font = "bold 18px Arial";
+        ctx.fillText(`SCORE: ${score}`, 15, 30);
+        
+        let currentLevel = Math.floor(score / 5) + 1;
+        ctx.fillStyle = "#ffcc00";
+        ctx.font = "bold 14px Arial";
+        ctx.fillText(`NIVEL: ${currentLevel}`, 15, 55);
+
+        animationId = requestAnimationFrame(draw);
+    }
+
+    function endGame() {
+        gameActive = false;
+        cancelAnimationFrame(animationId);
+        clearTimeout(spawnTimeout);
+        saveScore(playerName, score);
+        overlay.classList.remove('hidden');
+        document.getElementById('menu-title').innerText = "FIN DEL JUEGO";
+        document.getElementById('final-stat').classList.remove('hidden');
+        
+        let record = getBestScore(playerName);
+        let msg = `Puntuación: ${score} <br> Tu Récord: <b>${record}</b>`;
+        if (score >= record && score > 0) msg += `<br><span class="level-up">¡NUEVO RÉCORD!</span>`;
+        
+        document.getElementById('final-stat').innerHTML = msg;
+        playBtn.innerText = "REINTENTAR";
+        updateLeaderboard();
+    }
+
+    function saveScore(name, pts) {
+        let scores = JSON.parse(localStorage.getItem('bloquesScores')) || [];
+        let index = scores.findIndex(s => s.name.toLowerCase() === name.toLowerCase());
+
+        if (index !== -1) {
+            if (pts > scores[index].pts) {
+                scores[index].pts = pts;
+            }
+        } else {
+            scores.push({name, pts});
+        }
+        scores.sort((a, b) => b.pts - a.pts);
+        localStorage.setItem('bloquesScores', JSON.stringify(scores));
+    }
+
+    function getBestScore(name) {
+        let scores = JSON.parse(localStorage.getItem('bloquesScores')) || [];
+        let record = scores.find(s => s.name.toLowerCase() === name.toLowerCase());
+        return record ? record.pts : 0;
+    }
+
+    function updateLeaderboard() {
+        let scores = JSON.parse(localStorage.getItem('bloquesScores')) || [];
+        scoreList.innerHTML = scores
+            .slice(0, 10)
+            .map((s, i) => `<li><span>${i+1}. ${s.name}</span> <b>${s.pts}</b></li>`)
+            .join('');
+    }
+
+    updateLeaderboard();
+</script>
+
+</body>
+</html>

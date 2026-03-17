@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>PAUNITE GAMES - Estación de Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /* ===== RESET Y BASE ===== */
+        * { cursor: crosshair; } 
+        
+        body {
+            background-color: #050505;
+            color: #ccc;
+            font-family: 'VT323', monospace;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 200vh; 
+            overflow-x: hidden;
+        }
+
+        /* ===== EFECTO VHS GLOBAL (FIJO) ===== */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255,255,255,0.03) 0px,
+                rgba(255,255,255,0.03) 1px,
+                transparent 2px,
+                transparent 4px
+            );
+            pointer-events: none;
+            animation: scanline 0.2s infinite linear;
+            z-index: 9999;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        /* ===== CONTENEDOR PRINCIPAL ===== */
+        .container {
+            width: 80%;
+            max-width: 800px;
+            padding: 50px 20px;
+            z-index: 10;
+        }
+
+        .glitch-title {
+            font-size: 5rem;
+            text-align: center;
+            color: #fff;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-shadow: 3px 0 #ff00ff, -3px 0 #00ffff;
+            animation: glitch-anim 1s infinite alternate;
+        }
+
+        @keyframes glitch-anim {
+            0% { transform: skew(0.5deg); text-shadow: 2px 0 red, -2px 0 blue; }
+            50% { transform: skew(-1deg); text-shadow: -2px 0 red, 2px 0 blue; }
+            100% { transform: skew(0deg); }
+        }
+
+        /* ===== AVISO DE SEGURIDAD ===== */
+        .warning-box {
+            border: 2px solid #ff4d4d;
+            background: rgba(255, 77, 77, 0.1);
+            padding: 20px;
+            margin: 40px 0;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(255, 77, 77, 0.3);
+        }
+
+        .warning-box h2 { color: #ff4d4d; margin-top: 0; text-decoration: underline; }
+        .warning-box p { font-size: 1.4rem; color: #ffb3b3; animation: pulse 1.5s infinite; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        /* ===== SECCIONES ===== */
+        section {
+            background: rgba(20, 20, 20, 0.8);
+            border-left: 4px solid #333;
+            padding: 20px;
+            margin-bottom: 30px;
+            transition: 0.3s;
+        }
+
+        section:hover {
+            border-left-color: #00ffcc;
+            background: rgba(30, 30, 30, 0.9);
+        }
+
+        h2 { color: #00ffcc; text-transform: uppercase; margin-top: 0; }
+        p { font-size: 1.3rem; line-height: 1.4; }
+
+        /* ===== TABLAS ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 1.2rem;
+        }
+        table th, table td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+        }
+        table th { color: #00ffcc; }
+
+        /* ===== LISTAS ===== */
+        ul { list-style: square; padding-left: 20px; font-size: 1.2rem; }
+        li { margin-bottom: 10px; }
+        strong { color: #fff; }
+
+        /* ===== SOCIAL CHANNELS ===== */
+        .social-channels {
+            margin-top: 50px;
+            text-align: center;
+            border-top: 1px solid #333;
+            padding-top: 30px;
+        }
+        .social-link {
+            display: inline-block;
+            margin: 10px 20px;
+            color: #eee;
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: 0.3s;
+            border: 1px solid transparent;
+            padding: 5px 15px;
+        }
+        .social-link:hover {
+            color: #00ffcc;
+            border: 1px solid #00ffcc;
+            background: rgba(0, 255, 204, 0.1);
+        }
+        .social-link span { font-size: 0.8rem; display: block; color: #666; }
+
+        /* ===== BOTÓN FIJO ===== */
+        #btn-game {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 20px 40px;
+            background: #000;
+            color: #00ffcc;
+            border: 2px solid #00ffcc;
+            font-family: 'VT323', monospace;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            z-index: 10000;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        #btn-game:hover {
+            background: #00ffcc;
+            color: #000;
+            box-shadow: 0 0 30px #00ffcc;
+        }
+
+        .status-ui {
+            position: fixed;
+            top: 20px; left: 20px;
+            font-size: 1.2rem;
+            color: #00ff00;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="status-ui">● REC | CANAL 01 <br> <span id="clock">00:00:00</span></div>
+
+    <div class="container">
+        <h1 class="glitch-title">PAUNITE GAMES</h1>
+        <p style="text-align:center; font-size:1.5rem; color:#888;">Creadores de "La Culpa"</p>
+
+        <div class="warning-box">
+            <h2>⚠️ ADVERTENCIA DE SEGURIDAD</h2>
+            <p>Nuestras experiencias están diseñadas para explorar el <strong>daño psicológico, el aislamiento extremo y la paranoia.</strong></p>
+            <p>Si sientes que no estás solo, es porque probablemente <strong>no lo estás</strong>. No juegues en la oscuridad si tu mente es frágil.</p>
+        </div>
+
+        <section>
+            <h2>¿De qué trata "La Culpa"?</h2>
+            <p>Es un juego de terror psicológico en primera persona con una estética marcadamente retro (estilo PSX/baja resolución). La premisa es simple pero efectiva: despiertas en una casa que parece normal, pero algo se siente profundamente "mal".</p>
+        </section>
+
+        <section>
+            <h2>El Tema Central</h2>
+            <p>Como indica su nombre, el juego gira en torno al remordimiento y el castigo autoimpuesto.</p>
+        </section>
+
+        <section>
+            <h2>La Narrativa</h2>
+            <p>A medida que exploras la casa y realizas tareas mundanas, el entorno empieza a distorsionarse, revelando fragmentos de una verdad oscura sobre las acciones pasadas del protagonista.</p>
+        </section>
+
+        <section>
+            <h2>🕹️ Detalles Técnicos y Jugabilidad</h2>
+            <table>
+                <tr><th>Característica</th><th>Detalle</th></tr>
+                <tr><td>Plataforma</td><td>Windows (vía itch.io)</td></tr>
+                <tr><td>Estilo Visual</td><td>Gráficos Low Poly con filtros de ruido tipo VHS</td></tr>
+                <tr><td>Duración</td><td>Corta (10-15 min), ideal para una sesión intensa</td></tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>¿Por qué destaca este juego?</h2>
+            <p>Paunite Games logra el horror de lo cotidiano basándose en:</p>
+            <ul>
+                <li><strong>El Diseño de Sonido:</strong> Crujidos y silencios que mantienen la tensión.</li>
+                <li><strong>El Simbolismo:</strong> Cada habitación representa parte de la psique del personaje.</li>
+                <li><strong>La Inmersión:</strong> Sin interfaz (HUD) cargada para que te sientas atrapado.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>💡 Dato curioso</h2>
+            <p>Paunite Games suele participar en Game Jams y este juego es un excelente ejemplo de cómo pulir una idea pequeña hasta convertirla en una experiencia memorable.</p>
+        </section>
+
+        <div class="social-channels">
+            <h3>[ CANALES OFICIALES ]</h3>
+            <a href="https://www.instagram.com/paunite_games/" target="_blank" class="social-link">INSTAGRAM<span>@paunite_games</span></a>
+            <a href="https://www.youtube.com/@PauniteGames" target="_blank" class="social-link">YOUTUBE<span>@PauniteGames</span></a>
+        </div>
+
+        <p style="text-align:center; opacity:0.3; margin-top:50px;">[ FIN DE LA TRANSMISIÓN ]</p>
+    </div>
+
+    <button id="btn-game">INGRESAR AL JUEGO</button>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.getHours().toString().padStart(2, '0') + ":" + 
+                now.getMinutes().toString().padStart(2, '0') + ":" + now.getSeconds().toString().padStart(2, '0');
+        }
+        setInterval(updateClock, 1000);
+
+        window.onload = function() {
+            const btn = document.getElementById('btn-game');
+            if (btn) {
+                btn.onclick = function() {
+                    if (confirm("ADVERTENCIA: ¿Estás seguro de que quieres entrar?")) {
+                        window.location.href = "minijuego.html";
+                    }
+                };
+            }
+        };
+
+        setInterval(() => {
+            if(Math.random() > 0.98) {
+                document.body.style.filter = "invert(1)";
+                setTimeout(() => document.body.style.filter = "none", 50);
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
+ 
